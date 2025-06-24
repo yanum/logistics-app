@@ -10,7 +10,7 @@ import java.time.Instant
 import java.util.*
 
 @Service
-class Users(private val dynamoDbClient: DynamoDbClient) {
+class UsersRepository(private val dynamoDbClient: DynamoDbClient) {
 
     fun getByUserName(username: String): User? {
         val key = mapOf("user_name" to AttributeValue.fromS(username))
@@ -25,8 +25,6 @@ class Users(private val dynamoDbClient: DynamoDbClient) {
                 userName = item["user_name"]?.s() ?: "",
                 password = item["password"]?.s() ?: "",
                 clientId = item["client_id"]?.s() ?: "",
-                isActive = item["is_active"]?.bool() ?: true,
-                isAdmin = item["is_admin"]?.bool() ?: false,
                 lastUpdateAt = item["last_update_at"]?.s() ?: ""
             )
         } else {
@@ -36,18 +34,15 @@ class Users(private val dynamoDbClient: DynamoDbClient) {
 
 
     fun save(request: UserRequest): User {
-        // Check if user already exists
-        val existingUser = getByUserName(request.username)
+        val existingUser = getByUserName(request.userName)
         if (existingUser != null) {
-            throw IllegalArgumentException("User with username '${request.username}' already exists.")
+            throw IllegalArgumentException("User with username '${request.userName}' already exists.")
         }
 
         val user = User(
-            userName = request.username,
+            userName = request.userName,
             password = request.password,
             clientId = "client-${UUID.randomUUID()}",
-            isActive = request.isActive,
-            isAdmin = request.isAdmin,
             lastUpdateAt = Instant.now().toString()
         )
 
@@ -55,8 +50,6 @@ class Users(private val dynamoDbClient: DynamoDbClient) {
             "user_name" to AttributeValue.fromS(user.userName),
             "password" to AttributeValue.fromS(user.password),
             "client_id" to AttributeValue.fromS(user.clientId),
-            "is_active" to AttributeValue.fromBool(user.isActive),
-            "is_admin" to AttributeValue.fromBool(user.isAdmin),
             "last_update_at" to AttributeValue.fromS(user.lastUpdateAt)
         )
 

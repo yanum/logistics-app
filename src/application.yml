@@ -1,0 +1,22 @@
+resilience4j:
+  circuitbreaker:
+    instances:
+      operationsRepository:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+  retry:
+    instances:
+      operationsRepository:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+
+  bulkhead:
+    instances:
+      operationsRepository:
+        maxConcurrentCalls: 10

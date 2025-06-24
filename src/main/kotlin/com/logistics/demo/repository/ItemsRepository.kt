@@ -7,7 +7,7 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
 
 @Service
-class Items(
+class ItemsRepository(
     private val dynamoDbClient: DynamoDbClient,
 ) {
 
@@ -31,7 +31,6 @@ class Items(
 
 
     fun save(request: Item): Item {
-        // Check if user already exists
         val existingItem = getById(request.id)
         if (existingItem != null) {
             throw IllegalArgumentException("Item '${request}' already exists.")

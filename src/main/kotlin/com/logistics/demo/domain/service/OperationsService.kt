@@ -4,20 +4,21 @@ import com.logistics.demo.controller.dto.EmailRequest
 import com.logistics.demo.domain.Item
 import com.logistics.demo.domain.Item.ItemType
 import com.logistics.demo.domain.Operation
-import com.logistics.demo.repository.Items
-import com.logistics.demo.repository.Operations
+import com.logistics.demo.repository.ItemsRepository
+import com.logistics.demo.repository.OperationsRepository
 import org.springframework.stereotype.Component
 
 @Component
-class OperationsService(private val operationsRepository: Operations, private val itemsRepository: Items) {
+class OperationsService(private val operationsRepository: OperationsRepository, private val itemsRepository: ItemsRepository) {
 
     fun save(request: EmailRequest, clientId: String): Operation {
         val existingOperation = operationsRepository.findByClientIdAndBookingId(clientId, request.booking)
+        val uniqueItems = validateRequestItems(request)
+
         if (existingOperation != null) {
-            return updateBooking(existingOperation, request)
+            return updateBooking(existingOperation, request, uniqueItems)
         }
 
-        val uniqueItems = validateRequestItems(request)
 
         val operation = Operation(
             clientId = clientId,
@@ -36,7 +37,7 @@ class OperationsService(private val operationsRepository: Operations, private va
         return operation
     }
 
-    private fun updateBooking(existingOperation: Operation, request: EmailRequest): Operation {
+    private fun updateBooking(existingOperation: Operation, request: EmailRequest, uniqueItems:Set<Item>): Operation {
         val updatedContainers = (existingOperation.containers.orEmpty() +
                 (request.containers?.map { Operation.Container(it.container) } ?: emptyList()))
             .distinctBy { it.container }
@@ -56,6 +57,8 @@ class OperationsService(private val operationsRepository: Operations, private va
         )
 
         operationsRepository.save(updatedOperation)
+        uniqueItems.forEach { itemsRepository.save(it) }
+
         return updatedOperation
     }
 
